@@ -1,0 +1,101 @@
+version: '3.7'
+
+services:
+    
+    #Gateway
+
+    gateway:
+        image: test/k-api-gateway:latest
+        command: sh -c "uvicorn main:app --reload --host 0.0.0.0"
+        build:
+            context: ./gateway
+            dockerfile: Dockerfile
+        env_file:
+            - ./gateway/.env
+        ports:
+          - 8000:8000
+        depends_on:
+          - fastapi-users
+          - fastapi-jobs
+        volumes:
+          - ./gateway:/app
+
+    #Users Microservice
+
+    fastapi-users:
+        image: test/k-users:latest
+        command: sh -c "uvicorn app.main:app --reload --host 0.0.0.0"
+        build:
+            context: ./fastapi-users
+            dockerfile: Dockerfile
+        env_file:
+            - ./fastapi-users/.env
+        volumes:
+          - ./fastapi-users:/app
+        depends_on:
+            - users-db
+    
+    users-db:
+        image: postgres:14.2
+        env_file:
+            - ./fastapi-users/postgres_env
+        volumes:
+            - user-db:/var/lib/postgresql/data
+        
+    #Jobs Microservice
+
+    fastapi-jobs:
+        image: baranbartu/k-jobs:latest
+        command: sh -c "uvicorn app.main:app --reload --host 0.0.0.0"
+        build:
+            context: ./fastapi-jobs
+            dockerfile: Dockerfile
+        env_file:
+            - ./fastapi-jobs/.env
+        volumes:
+          - ./fastapi-jobs:/app
+        
+        depends_on:
+            - jobs-db
+        
+
+    jobs-db:
+        image: postgres:14.2
+        env_file:
+            - ./fastapi-jobs/postgres_env
+        volumes:
+            - jobs-db:/var/lib/postgresql/data
+
+
+    #Ratings Microservice
+
+    fastapi-ratings:
+        image: test/k-ratings:latest
+        command: sh -c "uvicorn app.main:app --reload --host 0.0.0.0"
+        build:
+            context: ./fastapi-ratings
+            dockerfile: Dockerfile
+        env_file:
+            - ./fastapi-ratings/.env
+        volumes:
+          - ./fastapi-ratings:/app
+        depends_on:
+            - ratings-db
+    
+    ratings-db:
+        image: postgres:14.2
+        env_file:
+            - ./fastapi-ratings/postgres_env
+        volumes:
+            - ratings-db:/var/lib/postgresql/data
+
+
+            
+
+volumes:
+    user-db:
+        driver: local
+    jobs-db:
+        driver: local
+    ratings-db:
+        driver: local
