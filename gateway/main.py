@@ -1,4 +1,4 @@
-from fastapi import FastAPI, status, Request, Response 
+from fastapi import FastAPI, status, Request, Response, APIRouter
 
 from conf import settings
 from core import route
@@ -11,8 +11,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
-
-
 
 
 
@@ -29,6 +27,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+@route(
+    request_method=app.post,
+    path = '/api/users',
+    status_code = status.HTTP_201_CREATED,
+    payload_key='user',
+    service_url=settings.USERS_SERVICE_URL,
+    authentication_required=False,
+    post_processing_func=None,
+    # authentication_token_decoder='auth.decode_access_token',
+    service_authorization_checker='auth.is_admin_user',
+    service_header_generator='auth.generate_request_header',
+    response_model='datastructures.users.UserOut'
+
+)
+async def create_user(user: UserCreate, request: Request, response: Response):
+    pass
 
 
 
@@ -48,23 +63,6 @@ async def login(email_password: UserLogin,
                 request: Request, response: Response):
     pass
 
-
-@route(
-    request_method=app.post,
-    path = '/api/users',
-    status_code = status.HTTP_201_CREATED,
-    payload_key='user',
-    service_url=settings.USERS_SERVICE_URL,
-    authentication_required=False,
-    post_processing_func=None,
-    # authentication_token_decoder='auth.decode_access_token',
-    service_authorization_checker='auth.is_admin_user',
-    service_header_generator='auth.generate_request_header',
-    response_model='datastructures.users.UserOut'
-
-)
-async def create_user(user: UserCreate, request: Request, response: Response):
-    pass
 
 
 
